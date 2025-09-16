@@ -17,7 +17,6 @@ class MyApp extends StatelessWidget {
     // Provide the MockLocationService to the entire app
     return Provider<MockLocationService>(
       create: (_) => MockLocationService(),
-      dispose: (_, service) => service.dispose(),
       child: MaterialApp(
         title: 'Transport Tracker Prototype',
         theme: ThemeData(

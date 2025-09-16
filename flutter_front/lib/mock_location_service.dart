@@ -1,21 +1,21 @@
 // lib/mock_location_service.dart
 
 import 'dart:async';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 
 class MockLocationService {
-  // We now use a Map to manage a stream for each bus/route ID.
   final Map<String, StreamController<LatLng>> _locationStreamControllers = {};
-  StreamSubscription<LocationData>? _locationSubscription;
   final Location _location = Location();
+  
+  // A timer to generate mock locations
+  Timer? _mockLocationTimer;
 
-  // The driver's app calls this, specifying which route it's on.
+  // This will now start a simulation instead of listening to the real GPS stream
   Future<void> startSharing(String routeId) async {
-    // Ensure a stream controller exists for this route.
     _locationStreamControllers.putIfAbsent(routeId, () => StreamController.broadcast());
 
-    // --- Permission checks remain the same ---
+    // --- Permission checks to get the initial location ---
     bool serviceEnabled = await _location.serviceEnabled();
     if (!serviceEnabled) {
       serviceEnabled = await _location.requestService();
@@ -28,32 +28,37 @@ class MockLocationService {
     }
     // --- End of permission checks ---
 
-    // Cancel any existing subscription before starting a new one.
-    _locationSubscription?.cancel();
+    // Stop any previous simulation
+    stopSharing();
 
-    _locationSubscription = _location.onLocationChanged.listen((LocationData currentLocation) {
-      if (currentLocation.latitude != null && currentLocation.longitude != null) {
-        final newPosition = LatLng(currentLocation.latitude!, currentLocation.longitude!);
-        // Add the new location to the specific stream for the given route.
-        _locationStreamControllers[routeId]?.add(newPosition);
-      }
+    // 1. Get the current location ONCE to use as a starting point
+    LocationData initialLocation = await _location.getLocation();
+    LatLng currentPosition = LatLng(initialLocation.latitude!, initialLocation.longitude!);
+
+    // 2. Start a timer to simulate movement
+    _mockLocationTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      // 3. Add a small offset to the coordinates to simulate movement
+      currentPosition = LatLng(
+        currentPosition.latitude + 0.0001, // Move North
+        currentPosition.longitude + 0.0001, // Move East
+      );
+
+      // Add the new simulated position to the stream
+      _locationStreamControllers[routeId]?.add(currentPosition);
     });
   }
 
-  // The user's app calls this to listen to a specific route.
   Stream<LatLng>? getStreamForRoute(String routeId) {
-    // Ensure a stream controller exists before returning the stream.
     _locationStreamControllers.putIfAbsent(routeId, () => StreamController.broadcast());
     return _locationStreamControllers[routeId]?.stream;
   }
 
-  // Stop sharing location.
+  // This now stops the timer
   void stopSharing() {
-    _locationSubscription?.cancel();
+    _mockLocationTimer?.cancel();
   }
 
   void dispose() {
-    // Close all stream controllers when the service is disposed.
     for (var controller in _locationStreamControllers.values) {
       controller.close();
     }
