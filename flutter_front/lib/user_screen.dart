@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 import 'mock_location_service.dart';
 
 class UserScreen extends StatefulWidget {
-  const UserScreen({super.key});
+  // Accept the routeId from the selection screen
+  final String routeId;
+  const UserScreen({super.key, required this.routeId});
 
   @override
   State<UserScreen> createState() => _UserScreenState();
@@ -15,42 +17,69 @@ class UserScreen extends StatefulWidget {
 class _UserScreenState extends State<UserScreen> {
   GoogleMapController? _mapController;
   Marker? _busMarker;
+  Stream<LatLng>? _locationStream; // The stream for our specific route
 
   final CameraPosition _initialCameraPosition = const CameraPosition(
-    target: LatLng(12.9716, 77.5946), // Bengaluru, India
+    target: LatLng(12.9716, 77.5946), // Bengaluru
     zoom: 12,
   );
 
   @override
-  Widget build(BuildContext context) {
-    // Access the location service from the provider
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Get the stream for the specific route passed to this widget
     final locationService = Provider.of<MockLocationService>(context, listen: false);
+    _locationStream = locationService.getStreamForRoute(widget.routeId);
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Live Bus Tracker')),
+      appBar: AppBar(title: Text('Tracking: ${widget.routeId}')),
       body: StreamBuilder<LatLng>(
-        stream: locationService.locationStream,
+        stream: _locationStream,
         builder: (context, snapshot) {
+          // If we have data, update the marker
           if (snapshot.hasData) {
             final LatLng busLocation = snapshot.data!;
-            // Update the marker with the new location
             _busMarker = Marker(
-              markerId: const MarkerId('bus'),
+              markerId: MarkerId(widget.routeId),
               position: busLocation,
               icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-              infoWindow: const InfoWindow(title: 'Bus Location')
             );
-            // Animate camera to the bus
             _mapController?.animateCamera(CameraUpdate.newLatLng(busLocation));
-          } else if (snapshot.connectionState == ConnectionState.waiting) {
-             // You can show a loading indicator here if needed
           }
 
-          return GoogleMap(
+          // The core map widget
+          final googleMap = GoogleMap(
             initialCameraPosition: _initialCameraPosition,
             onMapCreated: (controller) => _mapController = controller,
             markers: _busMarker != null ? {_busMarker!} : {},
           );
+
+          // NEW FEATURE: Status Indicator
+          // If there's no data, show an overlay message
+          if (!snapshot.hasData) {
+            return Stack(
+              children: [
+                googleMap, // Show map in the background
+                const Center(
+                  child: Card(
+                    color: Colors.white,
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'Waiting for bus location...\nThe bus may be offline.',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+          // Otherwise, just show the map with the updated marker
+          return googleMap;
         },
       ),
     );

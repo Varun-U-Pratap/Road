@@ -2,7 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'driver_screen.dart';
-import 'user_screen.dart';
+// Import the new route selection screen
+import 'route_selection_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -17,13 +18,11 @@ class LoginScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // ... The Driver button remains the same
             ElevatedButton.icon(
               icon: const Icon(Icons.drive_eta),
               label: const Text('Login as Driver'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                textStyle: const TextStyle(fontSize: 18),
-              ),
+              // ... style
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const DriverScreen()),
@@ -34,14 +33,11 @@ class LoginScreen extends StatelessWidget {
             ElevatedButton.icon(
               icon: const Icon(Icons.person),
               label: const Text('Login as User'),
-               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                textStyle: const TextStyle(fontSize: 18),
-                backgroundColor: Colors.teal
-              ),
+              // ... style
               onPressed: () {
+                // THIS IS THE CHANGE: Navigate to route selection instead of directly to the map
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const UserScreen()),
+                  MaterialPageRoute(builder: (_) => const RouteSelectionScreen()),
                 );
               },
             ),
