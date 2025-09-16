@@ -14,15 +14,53 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Provide the MockLocationService to the entire app
     return Provider<MockLocationService>(
       create: (_) => MockLocationService(),
+      dispose: (_, service) => service.dispose(),
       child: MaterialApp(
-        title: 'Transport Tracker Prototype',
+        title: 'Transport Tracker',
+        // Define Dark Theme (Default)
         theme: ThemeData(
-          primarySwatch: Colors.indigo,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
+          brightness: Brightness.light,
+          primarySwatch: Colors.teal,
+          scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+          cardColor: Colors.white,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.teal,
+            foregroundColor: Colors.white,
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.teal,
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
         ),
+        // Define Light Theme
+        darkTheme: ThemeData(
+          brightness: Brightness.dark,
+          primarySwatch: Colors.teal,
+          scaffoldBackgroundColor: const Color(0xFF121212),
+          cardColor: const Color(0xFF1E1E1E),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFF1E1E1E),
+            foregroundColor: Colors.white,
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.teal,
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ),
+        // Set Dark Theme as the default
+        themeMode: ThemeMode.dark,
         home: const LoginScreen(),
       ),
     );
